@@ -7,7 +7,8 @@ import plotly.express as px
 st.set_page_config(page_title="Fome Zero - Home", layout="wide")
 
 # ------------------------ CARREGANDO DADOS ------------------------
-df = pd.read_csv(r"D:\Downloads\Downloads\CURSO\7 Python\Arquivo\Project\dataset\zomato.csv")
+df = pd.read_csv("dataset/zomato.csv")
+
 
 # ------------------------ PADRÃO DE COLUNAS ------------------------
 df.rename(columns={
@@ -35,7 +36,7 @@ COUNTRIES = {
 df['country_name'] = df['country'].apply(lambda x: COUNTRIES.get(x, "Unknown"))
 
 # ------------------------ BARRA LATERAL ------------------------
-st.sidebar.image(r"D:\Downloads\Downloads\CURSO\7 Python\Arquivo\Project\logo.png", width=120)
+st.sidebar.image("logo.png", width=120)
 st.sidebar.title("Fome Zero")
 st.sidebar.markdown("## Filtros")
 countries = st.sidebar.multiselect("Selecione os Países", options=df['country_name'].unique(), default=df['country_name'].unique())
