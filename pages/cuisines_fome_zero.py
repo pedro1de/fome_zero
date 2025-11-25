@@ -8,12 +8,13 @@ import plotly.express as px
 st.title("Visão Cozinha")
 
 st.set_page_config(page_title="Fome Zero - Cuisines", layout="wide")
-st.sidebar.image(r"D:\Downloads\Downloads\CURSO\7 Python\Arquivo\Project\logo.png", width=120)
+st.sidebar.image("logo.png", width=120)
 st.sidebar.title("FOME ZERO")
 st.sidebar.markdown("### Filtros")
 
 # ------------------------ CARREGAMENTO DE DADOS ------------------------
-df = pd.read_csv(r"D:\Downloads\Downloads\CURSO\7 Python\Arquivo\Project\dataset\zomato.csv")
+df = pd.read_csv("dataset/zomato.csv")
+
 
 # ------------------------ LIMPEZA E RENOMEAÇÃO ------------------------
 def rename_columns(dataframe):
