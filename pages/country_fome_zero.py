@@ -53,8 +53,7 @@ df_raw['Longitude'] = pd.to_numeric(df_raw['Longitude'], errors='coerce')
 st.set_page_config(page_title="Fome Zero - Países", layout="wide")
 
 # Sidebar
-image = Image.open("D:\\Downloads\\Downloads\\CURSO\\7 Python\\Arquivo\\Project\\logo.png")
-st.sidebar.image(image, width=120)
+st.sidebar.image("logo.png", width=120)
 st.sidebar.title("Fome Zero")
 selected_countries = st.sidebar.multiselect(
     "Selecione os países", df_raw['country_name'].unique(), default=df_raw['country_name'].unique()
