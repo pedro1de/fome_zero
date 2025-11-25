@@ -33,7 +33,8 @@ def country_name(country_id):
 # -----------------------------------------
 # CARREGAR DADOS
 # -----------------------------------------
-df_raw = pd.read_csv("D:\\Downloads\\Downloads\\CURSO\\7 Python\\Arquivo\\Project\\dataset\\zomato.csv")
+df = pd.read_csv("dataset/zomato.csv")
+
 
 # Remover espaços extras dos nomes das colunas
 df_raw.rename(columns=lambda x: x.strip(), inplace=True)
