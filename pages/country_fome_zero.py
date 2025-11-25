@@ -24,7 +24,7 @@ except Exception as e:
     st.stop()
 
 # Mostrar colunas (diagnóstico)
-st.write("Colunas carregadas:", list(df_raw.columns))
+#st.write("Colunas carregadas:", list(df_raw.columns))
 
 # Limpeza de nomes de colunas (agora que df_raw existe)
 df_raw.rename(columns=lambda x: x.strip(), inplace=True)
