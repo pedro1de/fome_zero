@@ -38,7 +38,7 @@ except Exception as e:
     st.stop()
 
 # Mostra colunas para diagnóstico (você pode comentar depois)
-st.write("Colunas detectadas no CSV:", list(df.columns))
+#st.write("Colunas detectadas no CSV:", list(df.columns))
 
 # Renomeia colunas para o padrão usado no resto do projeto (seguro: só renomeia se as colunas existirem)
 rename_map = {
