@@ -1,43 +1,43 @@
-# ------------------------ country_fome_zero.py (corrigido) ------------------------
+# ------------------------ Início seguro de carregamento ------------------------
+import os
 import streamlit as st
 import pandas as pd
-import plotly.express as px
 from PIL import Image
-import os
+import plotly.express as px
 
 st.set_page_config(page_title="Fome Zero - Visão País", layout="wide")
-
 st.title("Visão País")
 st.markdown("---")
 
-# ------------------------ paths (relativos no repositório) ------------------------
+# Caminhos relativos (ajuste se o CSV estiver em outro local no repo)
 DATA_PATH = "dataset/zomato.csv"
 LOGO_PATH = "logo.png"
 
-# ------------------------ verificar arquivos ------------------------
+# Verifica existência do CSV antes de tentar ler
 if not os.path.exists(DATA_PATH):
-    st.error(f"Arquivo de dados não encontrado em '{DATA_PATH}'. Verifique se o arquivo 'zomato.csv' está na pasta 'dataset/' do repositório.")
+    st.error(f"Arquivo de dados não encontrado em '{DATA_PATH}'. Coloque 'zomato.csv' na pasta 'dataset/' do repositório.")
     st.stop()
 
-if not os.path.exists(LOGO_PATH):
-    st.sidebar.warning(f"Logo não encontrado em '{LOGO_PATH}'. Verifique se o arquivo 'logo.png' está na raiz do repositório.")
-else:
-    try:
-        st.sidebar.image(LOGO_PATH, width=120)
-    except Exception as e:
-        st.sidebar.warning("Falha ao carregar logo: " + str(e))
-
-st.sidebar.title("Fome Zero")
-st.sidebar.markdown("Filtre a visão dos dados abaixo:")
-
-# ------------------------ carregar dados ------------------------
+# Agora lemos o CSV com try/except para capturar erros e parar o app em caso de problema
 try:
     df_raw = pd.read_csv(DATA_PATH)
 except Exception as e:
-    st.error(f"Erro ao ler o CSV: {e}")
+    st.error(f"Falha ao ler o CSV em '{DATA_PATH}': {e}")
     st.stop()
 
-# ------------------------ limpar nomes de colunas (seguro) ------------------------
+# Remover espaços extras dos nomes das colunas (só depois que df_raw existe)
+df_raw.rename(columns=lambda x: x.strip(), inplace=True)
+
+# carregar logo (se existir)
+if os.path.exists(LOGO_PATH):
+    try:
+        st.sidebar.image(LOGO_PATH, width=120)
+    except Exception:
+        st.sidebar.warning("Falha ao carregar logo.")
+else:
+    st.sidebar.warning(f"Logo não encontrado em '{LOGO_PATH}'.")
+# ------------------------ Fim do trecho de carregamento seguro ------------------------
+
 # Remove espaços extras das colunas e garante nomes consistentes
 df_raw.rename(columns=lambda x: x.strip(), inplace=True)
 
