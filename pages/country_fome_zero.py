@@ -1,44 +1,49 @@
-# -----------------------------------------
-# COUNTRY FOME ZERO
-# -----------------------------------------
-import pandas as pd
+# -------- Início seguro e diagnóstico (substituir início do arquivo) --------
+import os
 import streamlit as st
-import plotly.express as px
+import pandas as pd
 from PIL import Image
+import plotly.express as px
 
-# -----------------------------------------
-# Função para mapear nomes de países
-# -----------------------------------------
-COUNTRIES = {
-    1: "India",
-    14: "Australia",
-    30: "Brazil",
-    37: "Canada",
-    94: "Indonesia",
-    148: "New Zealand",
-    162: "Philippines",
-    166: "Qatar",
-    184: "Singapore",
-    189: "South Africa",
-    191: "Sri Lanka",
-    208: "Turkey",
-    214: "United Arab Emirates",
-    215: "England",
-    216: "United States of America",
-}
+st.set_page_config(page_title="Fome Zero - Visão País", layout="wide")
+st.title("Visão País")
+st.markdown("---")
 
-def country_name(country_id):
-    return COUNTRIES.get(country_id, "Desconhecido")
+# caminhos relativos (no repositório)
+DATA_PATH = "dataset/zomato.csv"
+LOGO_PATH = "logo.png"
 
-# -----------------------------------------
-# CARREGAR DADOS
-# -----------------------------------------
-df = pd.read_csv("dataset/zomato.csv")
+# checa CSV
+if not os.path.exists(DATA_PATH):
+    st.error(f"Arquivo de dados não encontrado em '{DATA_PATH}'. Coloque 'zomato.csv' na pasta 'dataset/' do repositório.")
+    st.stop()
 
+# tenta ler CSV e garante que df_raw existe
+try:
+    df_raw = pd.read_csv(DATA_PATH)
+except Exception as e:
+    st.error(f"Falha ao ler o CSV em '{DATA_PATH}': {e}")
+    st.stop()
 
-# Remover espaços extras dos nomes das colunas
-df_raw.rename(columns=lambda x: x.strip(), inplace=True)
+# diagnóstico: mostra as 1ªs colunas (isso ajuda a ver se o CSV foi lido corretamente)
+st.write("Colunas carregadas do CSV:", list(df_raw.columns))
 
+# agora sim podemos limpar nomes de colunas com segurança
+try:
+    df_raw.rename(columns=lambda x: x.strip(), inplace=True)
+except Exception as e:
+    st.error(f"Erro ao renomear colunas: {e}")
+    st.stop()
+
+# tenta carregar logo (se existir)
+if os.path.exists(LOGO_PATH):
+    try:
+        st.sidebar.image(LOGO_PATH, width=120)
+    except Exception as e:
+        st.sidebar.warning(f"Falha ao carregar logo: {e}")
+else:
+    st.sidebar.warning(f"Logo não encontrado em '{LOGO_PATH}'.")
+# -------- Fim do bloco de inicialização seguro --------
 # Criar coluna de país
 df_raw['country_name'] = df_raw['Country Code'].apply(country_name)
 
