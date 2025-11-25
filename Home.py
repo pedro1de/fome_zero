@@ -7,7 +7,8 @@ import plotly.express as px
 st.set_page_config(page_title="Fome Zero - Home", layout="wide")
 
 # ------------------------ CARREGANDO DADOS ------------------------
-df = pd.read_csv("dataset/zomato.csv")
+df_raw = pd.read_csv("dataset/zomato.csv")
+
 
 
 # ------------------------ PADRÃO DE COLUNAS ------------------------
