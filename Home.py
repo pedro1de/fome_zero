@@ -1,192 +1,146 @@
-# -------- Início seguro e diagnóstico (substituir início do arquivo) --------
+# ------------------------ Home.py (robusto para Streamlit Cloud) ------------------------
 import os
 import streamlit as st
 import pandas as pd
-from PIL import Image
 import plotly.express as px
 
-st.set_page_config(page_title="Fome Zero - Visão País", layout="wide")
-st.title("Visão País")
-st.markdown("---")
+st.set_page_config(page_title="Fome Zero - Home", layout="wide")
 
-# caminhos relativos (no repositório)
+# Paths relativos (dentro do repositório)
 DATA_PATH = "dataset/zomato.csv"
 LOGO_PATH = "logo.png"
 
-# checa CSV
-if not os.path.exists(DATA_PATH):
-    st.error(f"Arquivo de dados não encontrado em '{DATA_PATH}'. Coloque 'zomato.csv' na pasta 'dataset/' do repositório.")
-    st.stop()
+st.sidebar.title("FOME ZERO")
 
-# tenta ler CSV e garante que df_raw existe
-try:
-    df_raw = pd.read_csv(DATA_PATH)
-except Exception as e:
-    st.error(f"Falha ao ler o CSV em '{DATA_PATH}': {e}")
-    st.stop()
-
-# diagnóstico: mostra as 1ªs colunas (isso ajuda a ver se o CSV foi lido corretamente)
-st.write("Colunas carregadas do CSV:", list(df_raw.columns))
-
-# agora sim podemos limpar nomes de colunas com segurança
-try:
-    df_raw.rename(columns=lambda x: x.strip(), inplace=True)
-except Exception as e:
-    st.error(f"Erro ao renomear colunas: {e}")
-    st.stop()
-
-# tenta carregar logo (se existir)
+# Verifica logo
 if os.path.exists(LOGO_PATH):
     try:
         st.sidebar.image(LOGO_PATH, width=120)
     except Exception as e:
         st.sidebar.warning(f"Falha ao carregar logo: {e}")
 else:
-    st.sidebar.warning(f"Logo não encontrado em '{LOGO_PATH}'.")
-# -------- Fim do bloco de inicialização seguro --------
+    st.sidebar.warning(f"Logo não encontrado em '{LOGO_PATH}'. Coloque 'logo.png' na raiz do repositório.")
 
-# ------------------------ Fim do trecho de carregamento seguro ------------------------
+st.sidebar.markdown("---")
+st.sidebar.markdown("Powered by Pedro Oliveira")
+st.sidebar.markdown("---")
 
-# Remove espaços extras das colunas e garante nomes consistentes
-df_raw.rename(columns=lambda x: x.strip(), inplace=True)
+# Verifica dataset
+if not os.path.exists(DATA_PATH):
+    st.error(f"Arquivo de dados não encontrado: '{DATA_PATH}'. Coloque 'zomato.csv' dentro da pasta 'dataset/' do repositório.")
+    st.stop()
 
-# Mostrar aviso se colunas esperadas não existirem
-expected_columns = [
-    'Restaurant ID', 'Restaurant Name', 'Country Code', 'City', 'Address',
-    'Locality', 'Locality Verbose', 'Longitude', 'Latitude', 'Cuisines',
-    'Average Cost for two', 'Currency', 'Has Table booking',
-    'Has Online delivery', 'Is delivering now', 'Switch to order menu',
-    'Price range', 'Aggregate rating', 'Rating color', 'Rating text',
-    'Votes'
-]
-missing = [c for c in expected_columns if c not in df_raw.columns]
+# Carrega CSV com try/except
+try:
+    df = pd.read_csv(DATA_PATH)
+except Exception as e:
+    st.error(f"Erro ao ler '{DATA_PATH}': {e}")
+    st.stop()
+
+# Mostra colunas para diagnóstico (você pode comentar depois)
+st.write("Colunas detectadas no CSV:", list(df.columns))
+
+# Renomeia colunas para o padrão usado no resto do projeto (seguro: só renomeia se as colunas existirem)
+rename_map = {
+    'Country Code': 'Country Code',
+    'Restaurant ID': 'Restaurant ID',
+    'City': 'City',
+    'Cuisines': 'Cuisines',
+    'Latitude': 'Latitude',
+    'Longitude': 'Longitude',
+    'Average Cost for two': 'Average Cost for two',
+    'Aggregate rating': 'Aggregate rating',
+    'Price range': 'Price range'
+}
+# (aqui apenas um placeholder — não alteramos nomes, mas garantimos que as colunas existem)
+# Tratar colunas essenciais
+expected = ['Restaurant ID','Restaurant Name','Country Code','City','Longitude','Latitude','Cuisines','Average Cost for two','Aggregate rating']
+missing = [c for c in expected if c not in df.columns]
 if missing:
-    st.warning(f"As seguintes colunas esperadas estão faltando no CSV: {missing}. O dashboard pode não funcionar corretamente.")
+    st.warning(f"As colunas esperadas estão faltando: {missing}. O app pode não mostrar tudo corretamente.")
 
-# ------------------------ criar coluna de país legível ------------------------
-COUNTRIES = {
+# Tratamentos seguros
+# Garante que 'Cuisines' exista e pega só o primeiro tipo
+if 'Cuisines' in df.columns:
+    df['cuisines_first'] = df['Cuisines'].astype(str).apply(lambda x: x.split(",")[0].strip())
+else:
+    df['cuisines_first'] = "Unknown"
+
+# Mapear country code para nome legível (se existir)
+COUNTRY_MAP = {
     1: "India", 14: "Australia", 30: "Brazil", 37: "Canada", 94: "Indonesia",
     148: "New Zealand", 162: "Philippines", 166: "Qatar", 184: "Singapore",
     189: "South Africa", 191: "Sri Lanka", 208: "Turkey",
     214: "United Arab Emirates", 215: "England", 216: "United States of America",
 }
-def map_country(code):
-    try:
-        return COUNTRIES.get(int(code), "Desconhecido")
-    except Exception:
-        return "Desconhecido"
-
-if 'Country Code' in df_raw.columns:
-    df_raw['country_name'] = df_raw['Country Code'].apply(map_country)
+if 'Country Code' in df.columns:
+    df['country_name'] = df['Country Code'].apply(lambda x: COUNTRY_MAP.get(int(x), "Unknown") if pd.notnull(x) else "Unknown")
 else:
-    # se não houver Country Code mas houver Country já em texto
-    if 'Country' in df_raw.columns:
-        df_raw['country_name'] = df_raw['Country'].astype(str)
+    # tenta coluna 'Country' textual, se existir
+    if 'Country' in df.columns:
+        df['country_name'] = df['Country'].astype(str)
     else:
-        st.warning("Não foi encontrada coluna 'Country Code' nem 'Country' no CSV. Usando 'Desconhecido' para país.")
-        df_raw['country_name'] = "Desconhecido"
+        df['country_name'] = "Unknown"
 
-# ------------------------ transformar tipos relevantes ------------------------
-# Converte colunas numéricas que vamos usar
-for col in ['Average Cost for two', 'Aggregate rating', 'Latitude', 'Longitude', 'Votes']:
-    if col in df_raw.columns:
-        df_raw[col] = pd.to_numeric(df_raw[col], errors='coerce')
+# Conversões numéricas seguras
+for col in ['Average Cost for two','Aggregate rating','Latitude','Longitude','Votes']:
+    if col in df.columns:
+        df[col] = pd.to_numeric(df[col], errors='coerce')
 
-# Tratar cuisines (pegar primeiro tipo)
-if 'Cuisines' in df_raw.columns:
-    df_raw['cuisines_first'] = df_raw['Cuisines'].astype(str).apply(lambda x: x.split(",")[0].strip())
-else:
-    df_raw['cuisines_first'] = "Unknown"
+# Filtros na sidebar
+countries = df['country_name'].unique().tolist()
+selected_countries = st.sidebar.multiselect("Selecione um ou mais países", countries, default=countries)
 
-# ------------------------ sidebar: filtro múltiplo de países ------------------------
-countries = df_raw['country_name'].unique().tolist()
-selected_countries = st.sidebar.multiselect("Selecione os países", options=countries, default=countries)
+cuisines = df['cuisines_first'].unique().tolist()
+selected_cuisines = st.sidebar.multiselect("Selecione tipos de culinária", cuisines, default=cuisines)
 
-st.sidebar.markdown("---")
-st.sidebar.write("Powered By Pedro Oliveira")
+# Filtra DataFrame
+df_filtered = df[(df['country_name'].isin(selected_countries)) & (df['cuisines_first'].isin(selected_cuisines))]
 
-# ------------------------ filtrar dados ------------------------
-df = df_raw[df_raw['country_name'].isin(selected_countries)].copy()
-if df.empty:
-    st.warning("Filtro retornou 0 linhas. Ajuste os filtros na barra lateral.")
-    st.stop()
-
-# ------------------------ KPIs ------------------------
-st.markdown("### Métricas Principais")
+# KPIs
+st.title("Home - Fome Zero")
+st.markdown("---")
 col1, col2, col3, col4 = st.columns(4)
-
-# Total restaurantes (usar Restaurant ID ou Restaurant Name conforme disponível)
-if 'Restaurant ID' in df.columns:
-    total_restaurants = df['Restaurant ID'].nunique()
-elif 'Restaurant Name' in df.columns:
-    total_restaurants = df['Restaurant Name'].nunique()
+# Total de restaurantes
+if 'Restaurant ID' in df_filtered.columns:
+    col1.metric("Total Restaurantes", int(df_filtered['Restaurant ID'].nunique()))
 else:
-    total_restaurants = "N/A"
-
-col1.metric("Total Restaurantes", total_restaurants)
-
-col2.metric("Total Países (filtrados)", df['country_name'].nunique())
-
-if 'City' in df.columns:
-    col3.metric("Total Cidades (filtradas)", df['City'].nunique())
-else:
-    col3.metric("Total Cidades (filtradas)", "N/A")
-
-if 'Aggregate rating' in df.columns:
-    col4.metric("Média de Avaliação", round(df['Aggregate rating'].mean(skipna=True), 2))
-else:
-    col4.metric("Média de Avaliação", "N/A")
+    col1.metric("Total Restaurantes", "N/A")
+# Total cidades
+col2.metric("Total Cidades", int(df_filtered['City'].nunique()) if 'City' in df_filtered.columns else "N/A")
+# Total países
+col3.metric("Total Países", int(df_filtered['country_name'].nunique()))
+# Média de avaliação
+col4.metric("Média de Avaliação", round(df_filtered['Aggregate rating'].mean(), 2) if 'Aggregate rating' in df_filtered.columns else "N/A")
 
 st.markdown("---")
 
-# ------------------------ gráfico restaurantes por país ------------------------
-st.subheader("Número de Restaurantes por País")
-if 'country_name' in df.columns:
-    if 'Restaurant ID' in df.columns:
-        country_count = df.groupby('country_name')['Restaurant ID'].nunique().reset_index().sort_values('Restaurant ID', ascending=False)
-        fig_country = px.bar(country_count, x='country_name', y='Restaurant ID', labels={'Restaurant ID':'Qtd Restaurantes','country_name':'País'}, text='Restaurant ID')
-        st.plotly_chart(fig_country, use_container_width=True)
-    else:
-        st.warning("Coluna 'Restaurant ID' não encontrada para montar o gráfico por país.")
-else:
-    st.warning("Coluna 'country_name' não encontrada.")
-
-st.markdown("---")
-
-# ------------------------ top cidades (barras) ------------------------
-st.subheader("Top Cidades por Número de Restaurantes")
-if 'City' in df.columns:
-    if 'Restaurant ID' in df.columns:
-        cities_count = df.groupby('City')['Restaurant ID'].nunique().reset_index().sort_values('Restaurant ID', ascending=False).head(20)
-        fig_cities = px.bar(cities_count, x='City', y='Restaurant ID', labels={'Restaurant ID':'# Restaurantes','City':'Cidade'}, text='Restaurant ID')
-        st.plotly_chart(fig_cities, use_container_width=True)
-    else:
-        st.warning("Coluna 'Restaurant ID' não encontrada para ranking de cidades.")
-else:
-    st.warning("Coluna 'City' não encontrada para ranking de cidades.")
-
-st.markdown("---")
-
-# ------------------------ mapa top cidades ------------------------
-st.subheader("Localização das Cidades (Top)")
-if {'Latitude', 'Longitude', 'City'}.issubset(df.columns):
-    top_cities_map = df.groupby(['City','country_name','Latitude','Longitude'])['Restaurant ID'].nunique().reset_index()
-    top_cities_map = top_cities_map.sort_values('Restaurant ID', ascending=False).head(50)
+# Mapa (agregado por cidade + culinária)
+st.subheader("Localização dos Restaurantes")
+if {'Latitude','Longitude','City'}.issubset(df_filtered.columns):
+    map_data = df_filtered.groupby(['City','cuisines_first','Latitude','Longitude']).size().reset_index(name='count')
     fig_map = px.scatter_mapbox(
-        top_cities_map,
-        lat='Latitude',
-        lon='Longitude',
-        size='Restaurant ID',
-        color='country_name',
-        hover_name='City',
-        hover_data={'Restaurant ID':True},
+        map_data,
+        lat="Latitude",
+        lon="Longitude",
+        size="count",
+        color="cuisines_first",
+        hover_name="City",
+        hover_data=["cuisines_first","count"],
         zoom=1,
         height=600
     )
     fig_map.update_layout(mapbox_style="open-street-map")
     st.plotly_chart(fig_map, use_container_width=True)
 else:
-    st.warning("Colunas 'Latitude' e 'Longitude' são necessárias para o mapa (verifique o CSV).")
+    st.warning("Colunas 'Latitude' e 'Longitude' ou 'City' ausentes para desenhar o mapa.")
 
 st.markdown("---")
-# --------------------------------------------------------------------------------
+# Top cidades
+st.subheader("Top 20 Cidades com Mais Restaurantes")
+if 'City' in df_filtered.columns and 'Restaurant ID' in df_filtered.columns:
+    top_cities = df_filtered.groupby('City').agg(restaurants_count=('Restaurant ID','nunique')).reset_index().sort_values('restaurants_count', ascending=False).head(20)
+    fig_cities = px.bar(top_cities, x='City', y='restaurants_count', color='restaurants_count', title="Top 20 Cidades")
+    st.plotly_chart(fig_cities, use_container_width=True)
+else:
+    st.warning("Colunas necessárias para ranking de cidades ausentes.")
