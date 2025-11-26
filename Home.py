@@ -105,23 +105,24 @@ st.markdown(
 
 Este painel apresenta uma visão completa sobre os indicadores operacionais do programa **Fome Zero**, permitindo acompanhar volume de pedidos, desempenho dos entregadores, eficiência dos restaurantes e padrões de entrega ao longo do tempo.
 
-Use os **filtros laterais** para explorar diferentes períodos, cidades e condições operacionais.  
+Use os **filtros laterais** para explorar diferentes países e tipos de culinária.  
 Todas as visualizações são atualizadas automaticamente conforme suas escolhas, oferecendo análises rápidas e objetivas para suporte à tomada de decisão.
 
 ---
 
 ### O que você pode analisar neste Dashboard
 
-- **Visão Empresa**  
-  Tendências gerais, sazonalidade, volume de pedidos e comportamento semanal.
+- **Visão Cidade**  
+  Gráficos apresentando a quantidade de restaurantes, reservas e entregas por cidade.
+  Use o filtro de país para avaliar as cidades da nação escolhida e a partir disso tomar as melhores decisões para o negócio.
 
-- **Visão Entregadores**  
-  Indicadores de performance, avaliações, rankings e variações por cidade.
+- **Visão País**  
+  Métricas principais, número de restaurantes por país e por cidade.
 
-- **Visão Restaurantes**  
-  Distâncias médias, tempo de entrega, eficiência logística e comparações entre cidades.
+- **Visão Cozinha**  
+  Avaliações médias e preço médio por tipo de culinária e localização dos restaurantes.
 
----
+---PROJETO AINDA NÃO FINALIZADO---
 
 Caso precise de ajuda ou deseje sugerir melhorias, entre em contato:  
 📧 **pedrolimagestor.mkt@gmail.com**
