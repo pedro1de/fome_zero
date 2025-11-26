@@ -99,6 +99,35 @@ df_filtered = df[(df['country_name'].isin(selected_countries)) & (df['cuisines_f
 
 # KPIs
 st.title("Home - Fome Zero")
+st.markdown(
+    """
+# 🍽️ Bem-vindo ao Dashboard Fome Zero
+
+Este painel apresenta uma visão completa sobre os indicadores operacionais do programa **Fome Zero**, permitindo acompanhar volume de pedidos, desempenho dos entregadores, eficiência dos restaurantes e padrões de entrega ao longo do tempo.
+
+Use os **filtros laterais** para explorar diferentes períodos, cidades e condições operacionais.  
+Todas as visualizações são atualizadas automaticamente conforme suas escolhas, oferecendo análises rápidas e objetivas para suporte à tomada de decisão.
+
+---
+
+### O que você pode analisar neste Dashboard
+
+- **Visão Empresa**  
+  Tendências gerais, sazonalidade, volume de pedidos e comportamento semanal.
+
+- **Visão Entregadores**  
+  Indicadores de performance, avaliações, rankings e variações por cidade.
+
+- **Visão Restaurantes**  
+  Distâncias médias, tempo de entrega, eficiência logística e comparações entre cidades.
+
+---
+
+Caso precise de ajuda ou deseje sugerir melhorias, entre em contato:  
+📧 **pedrolimagestor.mkt@gmail.com**
+    """
+)
+
 st.markdown("---")
 col1, col2, col3, col4 = st.columns(4)
 # Total de restaurantes
