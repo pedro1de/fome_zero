@@ -10,10 +10,10 @@ df = load_data()
 # --- Sidebar: filtros iniciais ---
 st.sidebar.header("Filtros iniciais")
 
-# Segurança: checar se colunas existem
-country_options = df["country"].dropna().unique().tolist() if "country" in df.columns else []
-city_options = df["city"].dropna().unique().tolist() if "city" in df.columns else []
-cuisine_options = df["cuisines"].dropna().unique().tolist() if "cuisines" in df.columns else []
+# Segurança: checar se colunas existem e preparar opções
+country_options = df["country"].dropna().unique().tolist() if "country" in df.columns and df["country"].notna().sum() > 0 else []
+city_options = df["city"].dropna().unique().tolist() if "city" in df.columns and df["city"].notna().sum() > 0 else []
+cuisine_options = df["cuisines"].dropna().unique().tolist() if "cuisines" in df.columns and df["cuisines"].notna().sum() > 0 else []
 
 paises = st.sidebar.multiselect(
     "Selecione os países:",
@@ -49,21 +49,20 @@ st.markdown("---")
 col1, col2, col3 = st.columns(3)
 
 with col1:
-    n_countries = int(df_filtered["country"].nunique()) if "country" in df_filtered.columns else 0
+    n_countries = int(df_filtered["country"].nunique()) if "country" in df_filtered.columns and df_filtered["country"].notna().sum() > 0 else 0
     st.metric("🌍 Nº de Países", f"{n_countries}")
 
 with col2:
-    n_cities = int(df_filtered["city"].nunique()) if "city" in df_filtered.columns else 0
+    n_cities = int(df_filtered["city"].nunique()) if "city" in df_filtered.columns and df_filtered["city"].notna().sum() > 0 else 0
     st.metric("🏙️ Nº de Cidades", f"{n_cities}")
 
 with col3:
     # média de rating com fallback
     if df_filtered["rating"].notna().sum() > 0:
-    avg_rating = df_filtered["rating"].mean()
-    st.metric("⭐ Avaliação Média", f"{avg_rating:.2f}")
-else:
-    st.metric("⭐ Avaliação Média", "—")
-
+        avg_rating = df_filtered["rating"].mean()
+        st.metric("⭐ Avaliação Média", f"{avg_rating:.2f}")
+    else:
+        st.metric("⭐ Avaliação Média", "—")
 
 st.markdown("---")
 
@@ -72,12 +71,12 @@ left, right = st.columns([1, 1])
 
 with left:
     st.subheader("Top Culinárias")
-    if "cuisines" in df_filtered.columns:
+    if "cuisines" in df_filtered.columns and df_filtered["cuisines"].notna().sum() > 0:
         top_cuis = top_n(df_filtered, "cuisines", "name" if "name" in df_filtered.columns else df_filtered.columns[0], n=10)
         fig = px.bar(top_cuis, x="cuisines", y="value", labels={"value": "# Restaurantes", "cuisines": "Culinária"})
         st.plotly_chart(fig, use_container_width=True)
     else:
-        st.info("Coluna 'cuisines' não encontrada no dataset.")
+        st.info("Coluna 'cuisines' não encontrada ou sem dados no dataset.")
 
 with right:
     st.subheader("Distribuição de Avaliações (amostra)")
@@ -95,7 +94,7 @@ st.markdown("---")
 # --- Mapa (amostragem controlada) ---
 st.subheader("📍 Distribuição geográfica (amostragem)")
 
-if "latitude" in df_filtered.columns and "longitude" in df_filtered.columns:
+if "latitude" in df_filtered.columns and "longitude" in df_filtered.columns and df_filtered[["latitude","longitude"]].notna().sum().sum() > 0:
     map_df = df_filtered.dropna(subset=["latitude", "longitude"])
     if len(map_df) == 0:
         st.info("Sem coordenadas válidas para exibir no mapa.")
@@ -105,7 +104,7 @@ if "latitude" in df_filtered.columns and "longitude" in df_filtered.columns:
         st.map(display_df[["latitude", "longitude"]])
         st.caption("Mapa amostrado para evitar lentidão. Use a aba 'Cidades' para análise geográfica mais detalhada.")
 else:
-    st.info("Colunas de coordenadas não encontradas (latitude/longitude).")
+    st.info("Colunas de coordenadas não encontradas (latitude/longitude) ou sem dados válidos.")
 
 st.markdown("---")
 st.caption("Dica: use os filtros no painel lateral para ajustar o universo de análise rapidamente.")
