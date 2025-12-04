@@ -78,12 +78,26 @@ st.markdown("---")
 # --- Top culinárias por número de restaurantes (sempre útil) ---
 st.subheader("Top Culinárias (por número de restaurantes)")
 if cuisines_available:
-    vc = df_country_city["cuisines"].value_counts().reset_index().rename(columns={"index":"cuisines","cuisines":"count"})
+    vc = (
+        df_country_city["cuisines"]
+        .value_counts()
+        .reset_index(name="count")
+        .rename(columns={"index": "cuisines"})
+    )
     vc_top = vc.head(20)
-    fig = px.bar(vc_top, x="count", y="cuisines", orientation="h", labels={"count":"# Restaurantes","cuisines":"Culinária"}, title="Top culinárias no contexto")
+
+    fig = px.bar(
+        vc_top,
+        x="count",
+        y="cuisines",
+        orientation="h",
+        labels={"count":"# Restaurantes","cuisines":"Culinária"},
+        title="Top culinárias no contexto"
+    )
     st.plotly_chart(fig, use_container_width=True)
 else:
     st.info("Nenhuma culinária disponível no contexto selecionado.")
+
 
 st.markdown("---")
 
