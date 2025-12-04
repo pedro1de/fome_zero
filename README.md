@@ -1,153 +1,145 @@
-🍽️ Fome Zero – Dashboard de Restaurantes (Zomato Dataset)
+# 🍽️ Fome Zero – Dashboard de Restaurantes (Zomato Dataset)
 
-Este projeto tem como objetivo analisar e apresentar informações sobre restaurantes ao redor do mundo, com base no dataset público Zomato.
-A solução foi construída em Python + Streamlit, com visual limpo e filtragem progressiva (País → Cidade → Culinária).
+Este projeto foi desenvolvido para análise exploratória e visual das informações fornecidas no dataset público **Zomato**, apresentando insights sobre restaurantes ao redor do mundo e comportamento gastronômico regional.
 
-Observação Importante:
-Este é um modelo analítico simplificado. Não representa análises oficiais da empresa ou do mercado. Foi desenvolvido exclusivamente para fins educacionais e de portfólio.
+> **Nota:**  
+> Este dashboard é um modelo simplificado, criado exclusivamente para fins educacionais e de portfólio.  
+> Não representa análises oficiais da empresa ou do mercado.
 
-🎯 Objetivo Geral
+---
 
-Fornecer uma visão estruturada e navegável sobre:
+## 🎯 Objetivo Geral
 
-Distribuição global de restaurantes
+Exibir uma visão clara e interativa do cenário global de restaurantes, permitindo:
+- Entender o volume e distribuição geográfica de restaurantes
+- Comparar avaliações médias por país e cidade
+- Observar padrões de faixa de preço e diversidade culinária
 
-Avaliações médias por região
+---
 
-Faixa de preços por país e culinária
+## 🗂️ Estrutura do Dashboard
 
-Volume e diversidade gastronômica por cidade
+### 1. **Home**
+Apresenta o panorama global com:
+- Total de países no dataset
+- Avaliação média geral
+- Faixa de preço média
+- Mapa mundial com distribuição dos restaurantes
+- Filtro inicial por país
 
-A análise permite entender tendências, padrões de consumo e concentração de mercado no setor de alimentação.
+Função principal: **contexto macro** — onde o usuário visualiza o cenário mundial antes de aprofundar-se nas análises.
 
-🗂️ Estrutura do Dashboard
-1. Home
+---
 
-Apresenta a visão global:
+### 2. **Countries (Países)**
 
-Total de países no dataset
+Comparativo entre países com:
+- Quantidade de restaurantes registrados
+- Avaliação média por país
+- Faixa de preço predominante
+- Diversidade de culinárias
 
-Avaliação média global
+Permite responder:
+> “Quais países concentram maior presença gastronômica e qualidade média mais alta?”
 
-Faixa de preço média
+---
 
-Distribuição de restaurantes no mapa
+### 3. **Cities (Cidades)**
 
-Filtro de País
+Aprofunda a análise de forma progressiva:
+- Ranking de cidades com mais restaurantes
+- Avaliação média por cidade
+- Distribuição de faixa de preço
+- Diversidade culinária local
 
-Função da tela: contexto macro.
+O filtro de cidades responde dinamicamente à seleção de país.
 
-2. Countries (Visão por País)
+Responde:
+> “Quais cidades são polos culinários dentro de cada país?”
 
-Aba projetada para análise comparativa global entre países:
+---
 
-Quantidade de restaurantes por país
+### 4. **Cuisines (Culinárias)**
 
-Média de avaliação
+Nível final de detalhamento:
+- Popularidade das principais culinárias
+- Comparação Preço × Avaliação
+- Distribuição regional de estilos gastronômicos
 
-Distribuição de faixas de preço
+O filtro mostra apenas culinárias existentes dentro do país e cidade selecionados.
 
-Diversidade de culinárias
+Responde:
+> “Quais culinárias são mais competitivas, populares e bem avaliadas — e a que preço?”
 
-→ Ajuda a responder:
-"Quais países possuem maior concentração gastronômica e qualidade média mais alta?"
+---
 
-3. Cities (Visão por Cidade)
+## 🛠️ Tecnologias Utilizadas
 
-Filtragem refinada (País → Cidade):
+| Ferramenta | Uso |
+|------------|-----|
+| Python 3.13 | Base do projeto |
+| Streamlit | Interface do dashboard |
+| Pandas | Manipulação e limpeza de dados |
+| Plotly | Visualização de dados |
+| Altair | Visualização adicional |
+| Zomato Dataset | Base de dados analisada |
 
-Ranking de cidades por número de restaurantes
+---
 
-Avaliação média por cidade
+## 🔍 Metodologia e Lógica de Construção
 
-Faixa de preço típica
+1. **Carregamento e Padronização**
+   - Correção de nomes e códigos de países
+   - Remoção de duplicidades e nulos críticos
 
-Distribuição de culinárias locais
+2. **Filtros Hierárquicos (Progressivos)**
+   - País → Cidade → Culinária  
+   - Cada nível só exibe valores possíveis após o filtro anterior
 
-→ Ajuda a responder:
-"Quais cidades são polos culinários dentro de cada país?"
+3. **KPIs Dinâmicos**
+   - Avaliação média
+   - Preço médio
+   - Quantidade de restaurantes
 
-4. Cuisines (Visão por Culinária)
+4. **Visualização Inteligente**
+   - Mapa para contexto global
+   - Barras para comparativos
+   - Boxplot/Dispersão para preço × avaliação
 
-Filtragem final (País → Cidade → Culinária):
+---
 
-Top culinárias por volume
+## 📈 Insights Observados
 
-Relação Preço × Avaliação
+- Países com maior volume não necessariamente apresentam melhores avaliações.
+- Cidades com forte densidade culinária tendem a exibir maior diversidade, mas avaliações variáveis.
+- A faixa de preço não apresenta correlação direta com avaliação média: restaurantes mais caros não garantem melhor nota.
+- A culinária dominante varia fortemente por contexto cultural, turístico e socioeconômico.
 
-Perfil de popularidade
+---
 
-Presença global/local
+## 🚀 Acesse o Dashboard
 
-→ Responde:
-"Quais culinárias são mais competitivas e bem avaliadas, e a que preço?"
+Sem download e sem instalação:
 
-🛠️ Tecnologias Utilizadas
-Ferramenta	Finalidade
-Python 3.13	Base do projeto
-Streamlit	Interface interativa
-Pandas	Tratamento de dados
-Plotly	Visualização de gráficos
-Altair	Gráficos complementares
-Zomato Dataset	Dados de restaurantes
-🔍 Lógica de Construção
-
-ETL Simplificado
-
-Leitura do dataset (zomato.csv)
-
-Padronização de nomes de países e colunas
-
-Remoção de duplicados e nulos essenciais
-
-Progressão de Filtros
-
-País → Cidade → Culinária
-
-Sempre respeitando apenas valores disponíveis após o filtro anterior
-
-KPIs Dinâmicos
-
-Avaliação média
-
-Preço médio
-
-Quantidade de restaurantes
-
-Visualização Multi-Nível
-
-Mapa global (macro contexto)
-
-Barras e ranking (comparação)
-
-Boxplot e dispersão (qualidade vs custo)
-
-📈 Insights Observados (opcionais)
-
-Mercados muito populosos tendem a apresentar maior diversidade gastronômica, mas avaliações mais distribuídas (nem sempre altas).
-
-Culinárias dominantes por país revelam padrões culturais e turísticos.
-
-Cidades com maior concentração de restaurantes não são necessariamente as mais bem avaliadas.
-
-Faixa de preço não guarda correlação forte com avaliação: restaurantes caros não garantem maior satisfação.
-
-🚀 Como Executar
-
-Sem instalar nada, acesse:
-
-👉 Deploy Streamlit
+👉 **Streamlit App:**  
 https://fomezero-llewfxvsb9yte2xpkmuaud.streamlit.app/
 
-👤 Autor
+---
 
-Pedro Oliveira
-Dashboard construído como projeto analítico inicial para compor portfólio e validar competências em:
+## 👤 Autor
 
-Visualização de dados
+**Pedro Oliveira**
 
-Tratamento e estruturação
+Projeto desenvolvido como peça de portfólio com foco em:
+- Visualização de dados
+- Interpretação de métricas
+- Storytelling com dashboards
+- Experiência inicial com dados reais
 
-Storytelling com dados
+---
 
-Construção de dashboards interativos
+## 📌 Observação Final
+
+Este dashboard não tem fins comerciais e não representa análises oficiais do mercado.  
+Foi construído **exclusivamente para desenvolvimento de competências analíticas e apresentação em portfólio**.
+
