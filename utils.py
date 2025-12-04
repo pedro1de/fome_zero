@@ -80,17 +80,16 @@ def load_data(path="dataset/zomato.csv"):
         df["longitude"] = pd.to_numeric(df[possible[0]], errors="coerce") if possible else None
 
     # --- Rating ---
-    # Normalize rating: procurar por 'rating' ou 'aggregate_rating'
-    if "rating" not in df.columns:
-        lowcols = {c.lower(): c for c in df.columns}
-        if "aggregate_rating" in lowcols:
-            df["rating"] = pd.to_numeric(df[lowcols["aggregate_rating"]], errors="coerce")
-        elif "rating" in lowcols:
-            df["rating"] = pd.to_numeric(df[lowcols["rating"]], errors="coerce")
-        else:
-            df["rating"] = pd.to_numeric(df.get("rating", None), errors="coerce")
-    else:
-        df["rating"] = pd.to_numeric(df["rating"], errors="coerce")
+   # --- Rating ---
+possible_rating_cols = [c for c in df.columns if "rating" in c.lower()]
+
+if possible_rating_cols:
+    # pega a primeira coluna válida contendo "rating"
+    selected = possible_rating_cols[0]
+    df["rating"] = pd.to_numeric(df[selected], errors="coerce")
+else:
+    df["rating"] = None
+
 
     # --- Price / custo (tentativa robusta) ---
     # Alguns datasets possuem 'price', 'price_range', 'approx_cost(for two people)' etc.
