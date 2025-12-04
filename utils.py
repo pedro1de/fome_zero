@@ -2,7 +2,7 @@ import pandas as pd
 import streamlit as st
 
 @st.cache_data
-def load_data(path="dataset/fome_zero.csv"):
+def load_data(path="dataset/zomato.csv"):
     df = pd.read_csv(path)
     df.columns = [c.strip().lower() for c in df.columns]
 
