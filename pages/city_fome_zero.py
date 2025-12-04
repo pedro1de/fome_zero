@@ -1,165 +1,112 @@
-# ------------------------ CITIES.PY ------------------------
 import streamlit as st
-import pandas as pd
-import inflection
 import plotly.express as px
+from utils import load_data, top_n
 
-# ------------------------ CONFIGURAÇÃO DA PÁGINA ------------------------
-st.title("Visão Cidade")
+st.set_page_config(page_title="Cidades - Fome Zero", layout="wide")
 
-st.set_page_config(page_title="Fome Zero - Cities", layout="wide")
-st.sidebar.image("logo.png", width=120)
-st.sidebar.title("FOME ZERO")
-st.sidebar.markdown("### Filtros")
+# Sidebar com logo e filtros (funil)
+with st.sidebar:
+    st.image("logo.png", width=160)
+    st.markdown("---")
+    st.title("🏙️ Cidades")
 
-# ------------------------ CARREGAMENTO DE DADOS ------------------------
-df = pd.read_csv("dataset/zomato.csv")
+# Carrega dados
+df = load_data()
 
+# Validação básica
+if "country" not in df.columns or df["country"].dropna().empty:
+    st.error("Coluna 'country' ausente ou sem dados. Verifique o dataset.")
+    st.stop()
 
-# ------------------------ LIMPEZA E RENOMEAÇÃO ------------------------
-def rename_columns(dataframe):
-    df_copy = dataframe.copy()
-    title = lambda x: inflection.titleize(x)
-    snakecase = lambda x: inflection.underscore(x)
-    spaces = lambda x: x.replace(" ", "")
-    cols_old = list(df_copy.columns)
-    cols_old = list(map(title, cols_old))
-    cols_old = list(map(spaces, cols_old))
-    cols_new = list(map(snakecase, cols_old))
-    df_copy.columns = cols_new
-    return df_copy
+# Country selector (single)
+country_list = sorted(df["country"].dropna().unique().tolist())
+country_selected = st.sidebar.selectbox("Selecione o país", country_list, index=0)
 
-df = rename_columns(df)
-
-# ------------------------ TRATAMENTO DE PAÍSES E PREÇO ------------------------
-COUNTRIES = {
-    1: "India", 14: "Australia", 30: "Brazil", 37: "Canada",
-    94: "Indonesia", 148: "New Zeland", 162: "Philippines", 166: "Qatar",
-    184: "Singapure", 189: "South Africa", 191: "Sri Lanka", 208: "Turkey",
-    214: "United Arab Emirates", 215: "England", 216: "United States of America"
-}
-df['country'] = df['country_code'].apply(lambda x: COUNTRIES[x])
-
-def create_price_type(price_range):
-    if price_range == 1:
-        return "cheap"
-    elif price_range == 2:
-        return "normal"
-    elif price_range == 3:
-        return "expensive"
-    else:
-        return "gourmet"
-
-df['price_type'] = df['price_range'].apply(create_price_type)
-
-# ------------------------ FILTROS ------------------------
-selected_countries = st.sidebar.multiselect(
-    "Selecione um ou mais países",
-    options=df['country'].unique(),
-    default=df['country'].unique()
+# City selector dependente do país
+cities_for_country = df[df["country"] == country_selected]["city"].dropna().unique().tolist()
+cities_for_country = sorted(cities_for_country)
+# Se não houver cidades listadas, deixar vazio e mostrar aviso depois
+city_selected = st.sidebar.multiselect(
+    "Selecione a(s) cidade(s)",
+    options=cities_for_country,
+    default=cities_for_country if len(cities_for_country) <= 10 else cities_for_country[:10]
 )
 
-df_country = df[df['country'].isin(selected_countries)]
+# Aplica filtros: país sempre aplicado, cidade apenas se selecionada
+df_country = df[df["country"] == country_selected].copy()
+df_filtered = df_country.copy()
+if city_selected:
+    df_filtered = df_country[df_country["city"].isin(city_selected)]
 
-st.sidebar.markdown("""---""")
-st.sidebar.markdown("Powered by Pedro Oliveira")
+# Cabeçalho
+st.title(f"🏙️ Visão por Cidade — {country_selected}")
+st.markdown("Análise detalhada das cidades do país selecionado. Use o filtro de cidade para afinar o universo.")
 
-# ------------------------ CONTAINERS ------------------------
+# KPIs por seleção (macro por país / micro por cidades selecionadas)
 col1, col2, col3 = st.columns(3)
-
-# ---------- CONTAINER 1: RESTAURANTES ----------
 with col1:
-    st.markdown("### Restaurantes por Cidade")
-    restaurants_count = df_country.groupby(['country','city'])['restaurant_id'].nunique().reset_index()
-    restaurants_count = restaurants_count.sort_values('restaurant_id', ascending=False)
-    fig_restaurants = px.bar(
-        restaurants_count,
-        x='city',
-        y='restaurant_id',
-        color='country',
-        labels={"city":"Cidade", "restaurant_id":"Número de Restaurantes"},
-        title="Número de Restaurantes por Cidade"
-    )
-    st.plotly_chart(fig_restaurants, use_container_width=True)
-
-st.markdown("""---""")
-
-# ---------- CONTAINER 2: RESERVAS E DELIVERY ----------
+    st.metric("🍽️ Restaurantes (no universo filtrado)", f"{len(df_filtered):,}")
 with col2:
-    st.markdown("### Reservas por Cidade")
-    booking = df_country.groupby(['country','city'])['has_table_booking'].sum().reset_index()
-    fig_booking = px.bar(
-        booking,
-        x='city',
-        y='has_table_booking',
-        color='country',
-        labels={"city":"Cidade", "has_table_booking":"Restaurantes com Reserva"},
-        title="Reservas por Cidade"
-    )
-    st.plotly_chart(fig_booking, use_container_width=True)
-
+    if df_filtered["rating"].notna().sum() > 0:
+        st.metric("⭐ Avaliação média (filtrada)", f"{df_filtered['rating'].mean():.2f}")
+    else:
+        st.metric("⭐ Avaliação média (filtrada)", "—")
 with col3:
-    st.markdown("### Delivery por Cidade")
-    delivery = df_country.groupby(['country','city'])['has_online_delivery'].sum().reset_index()
-    fig_delivery = px.bar(
-        delivery,
-        x='city',
-        y='has_online_delivery',
-        color='country',
-        labels={"city":"Cidade", "has_online_delivery":"Restaurantes com Delivery"},
-        title="Delivery por Cidade"
-    )
-    st.plotly_chart(fig_delivery, use_container_width=True)
+    if "price_num" in df_filtered.columns and df_filtered["price_num"].notna().sum() > 0:
+        st.metric("💰 Ticket mediano (filtrado)", f"{df_filtered['price_num'].median():.2f}")
+    else:
+        st.metric("💰 Ticket mediano (filtrado)", "—")
 
-st.markdown("""---""")
+st.markdown("---")
 
-# ---------- CONTAINER 3: NOTA MÉDIA E PREÇO ----------
-col4, col5 = st.columns(2)
-with col4:
-    st.markdown("### Nota Média por Cidade")
-    rating = df_country.groupby(['country','city'])['aggregate_rating'].mean().reset_index()
-    fig_rating = px.bar(
-        rating,
-        x='city',
-        y='aggregate_rating',
-        color='country',
-        labels={"city":"Cidade", "aggregate_rating":"Nota Média"},
-        title="Nota Média por Cidade"
-    )
-    st.plotly_chart(fig_rating, use_container_width=True)
+# Top cidades por número de restaurantes (considerando país)
+st.subheader("Top cidades por número de restaurantes (país)")
+top_cities = top_n(df_country, "city", "name" if "name" in df_country.columns else df_country.columns[0], n=15, agg="count")
+if not top_cities.empty:
+    fig1 = px.bar(top_cities, x="city", y="value", labels={"value": "# Restaurantes", "city": "Cidade"}, title="Top cidades do país")
+    st.plotly_chart(fig1, use_container_width=True)
+else:
+    st.info("Sem dados de cidade para este país.")
 
-with col5:
-    st.markdown("### Preço Médio por Cidade")
-    avg_cost = df_country.groupby(['country','city'])['average_cost_for_two'].mean().reset_index()
-    fig_cost = px.bar(
-        avg_cost,
-        x='city',
-        y='average_cost_for_two',
-        color='country',
-        labels={"city":"Cidade", "average_cost_for_two":"Preço Médio para Dois"},
-        title="Preço Médio por Cidade"
-    )
-    st.plotly_chart(fig_cost, use_container_width=True)
+st.markdown("---")
 
-st.markdown("""---""")
+# Distribuição de rating por cidade (apenas cidades selecionadas ou top cidades)
+st.subheader("Distribuição de avaliações por cidade")
+if df_filtered["rating"].notna().sum() > 0 and "city" in df_filtered.columns:
+    # escolher cidades a plotar: se selecionadas, usar elas; senão top 8 por volume
+    if city_selected:
+        cities_plot = city_selected
+    else:
+        cities_plot = top_cities["city"].tolist()[:8] if not top_cities.empty else df_country["city"].dropna().unique().tolist()[:8]
 
-# ---------- CONTAINER 4: MAPA DE RESTAURANTES ----------
-st.markdown("### Localização dos Restaurantes")
-# Para o mapa, precisamos das coordenadas
-df_map = df_country.groupby(['country','city','latitude','longitude']).agg({
-    'restaurant_id':'count'
-}).reset_index()
+    subset = df_filtered[df_filtered["city"].isin(cities_plot)]
+    if not subset.empty:
+        fig2 = px.box(subset, x="city", y="rating", points="outliers", labels={"rating":"Avaliação","city":"Cidade"}, title="Boxplot de avaliações por cidade")
+        st.plotly_chart(fig2, use_container_width=True)
+    else:
+        st.info("Sem dados suficientes para plotar avaliações por cidade.")
+else:
+    st.info("Avaliações não disponíveis para plotar.")
 
-fig_map = px.scatter_mapbox(
-    df_map,
-    lat='latitude',
-    lon='longitude',
-    size='restaurant_id',
-    color='country',
-    hover_name='city',
-    hover_data={'restaurant_id':True},
-    zoom=1,
-    height=600
-)
-fig_map.update_layout(mapbox_style="open-street-map")
-st.plotly_chart(fig_map, use_container_width=True)
+st.markdown("---")
+
+# Mapa focado nas cidades filtradas (apenas se existir coordenadas)
+st.subheader("📍 Mapa das cidades selecionadas (amostragem)")
+if "latitude" in df_filtered.columns and "longitude" in df_filtered.columns and df_filtered[["latitude","longitude"]].notna().sum().sum() > 0:
+    map_df = df_filtered.dropna(subset=["latitude","longitude"])
+    display_df = map_df.sample(500) if len(map_df) > 500 else map_df
+    st.map(display_df[["latitude", "longitude"]])
+    st.caption("Mapa amostrado — zoom para explorar concentrações locais.")
+else:
+    st.info("Sem coordenadas válidas para exibição no mapa desta aba.")
+
+st.markdown("---")
+
+# Tabela: top restaurantes por avaliação dentro do universo filtrado
+st.subheader("Top restaurantes (por avaliação) — universo filtrado")
+display_cols = [c for c in ["name", "city", "cuisines", "rating", "price_num"] if c in df_filtered.columns]
+if display_cols:
+    table = df_filtered.sort_values(by="rating", ascending=False).head(50)[display_cols].fillna("-")
+    st.dataframe(table)
+else:
+    st.info("Não há colunas suficientes para exibir tabela de top restaurantes.")
