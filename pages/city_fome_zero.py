@@ -18,28 +18,37 @@ if "country" not in df.columns or df["country"].dropna().empty:
     st.error("Coluna 'country' ausente ou sem dados. Verifique o dataset.")
     st.stop()
 
-# Country selector (single)
+# Country selector (inclui "Todos")
 country_list = sorted(df["country"].dropna().unique().tolist())
-country_selected = st.sidebar.selectbox("Selecione o país", country_list, index=0)
+country_options = ["Todos"] + country_list
+country_selected = st.sidebar.selectbox("Selecione o país", country_options, index=0)
 
-# City selector dependente do país
-cities_for_country = df[df["country"] == country_selected]["city"].dropna().unique().tolist()
+# City selector dependente do país (se "Todos", mostrar todas as cidades)
+if country_selected == "Todos":
+    cities_for_country = df["city"].dropna().unique().tolist()
+else:
+    cities_for_country = df[df["country"] == country_selected]["city"].dropna().unique().tolist()
 cities_for_country = sorted(cities_for_country)
-# Se não houver cidades listadas, deixar vazio e mostrar aviso depois
+
 city_selected = st.sidebar.multiselect(
     "Selecione a(s) cidade(s)",
     options=cities_for_country,
     default=cities_for_country if len(cities_for_country) <= 10 else cities_for_country[:10]
 )
 
-# Aplica filtros: país sempre aplicado, cidade apenas se selecionada
-df_country = df[df["country"] == country_selected].copy()
+# Aplica filtros: país e cidade (cidade só se selecionada)
+if country_selected == "Todos":
+    df_country = df.copy()
+else:
+    df_country = df[df["country"] == country_selected].copy()
+
 df_filtered = df_country.copy()
 if city_selected:
     df_filtered = df_country[df_country["city"].isin(city_selected)]
 
 # Cabeçalho
-st.title(f"🏙️ Visão por Cidade — {country_selected}")
+title_country = "Todos os países" if country_selected == "Todos" else country_selected
+st.title(f"🏙️ Visão por Cidade — {title_country}")
 st.markdown("Análise detalhada das cidades do país selecionado. Use o filtro de cidade para afinar o universo.")
 
 # KPIs por seleção (macro por país / micro por cidades selecionadas)
@@ -59,18 +68,18 @@ with col3:
 
 st.markdown("---")
 
-# Top cidades por número de restaurantes (considerando país)
-st.subheader("Top cidades por número de restaurantes (país)")
+# Top cidades por número de restaurantes (considerando país ou todos)
+st.subheader("Top cidades por número de restaurantes")
 top_cities = top_n(df_country, "city", "name" if "name" in df_country.columns else df_country.columns[0], n=15, agg="count")
 if not top_cities.empty:
-    fig1 = px.bar(top_cities, x="city", y="value", labels={"value": "# Restaurantes", "city": "Cidade"}, title="Top cidades do país")
+    fig1 = px.bar(top_cities, x="city", y="value", labels={"value": "# Restaurantes", "city": "Cidade"}, title=f"Top cidades em {title_country}")
     st.plotly_chart(fig1, use_container_width=True)
 else:
-    st.info("Sem dados de cidade para este país.")
+    st.info("Sem dados de cidade para este contexto.")
 
 st.markdown("---")
 
-# Distribuição de rating por cidade (apenas cidades selecionadas ou top cidades)
+# Distribuição de rating por cidade
 st.subheader("Distribuição de avaliações por cidade")
 if df_filtered["rating"].notna().sum() > 0 and "city" in df_filtered.columns:
     # escolher cidades a plotar: se selecionadas, usar elas; senão top 8 por volume
