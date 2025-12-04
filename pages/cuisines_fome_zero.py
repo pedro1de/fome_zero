@@ -18,22 +18,31 @@ if "country" not in df.columns or df["country"].dropna().empty:
     st.error("Coluna 'country' ausente ou sem dados. Verifique o dataset.")
     st.stop()
 
-# País selector
+# País selector (inclui Todos)
 country_list = sorted(df["country"].dropna().unique().tolist())
-country_selected = st.sidebar.selectbox("Selecione o país", country_list, index=0)
+country_options = ["Todos"] + country_list
+country_selected = st.sidebar.selectbox("Selecione o país", country_options, index=0)
 
-# Cidades disponíveis para o país (dependente)
-cities_for_country = df[df["country"] == country_selected]["city"].dropna().unique().tolist()
+# Cidades disponíveis para o país (dependente do país selecionado)
+if country_selected == "Todos":
+    cities_for_country = df["city"].dropna().unique().tolist()
+else:
+    cities_for_country = df[df["country"] == country_selected]["city"].dropna().unique().tolist()
 cities_for_country = sorted(cities_for_country)
 city_selected = st.sidebar.selectbox("Selecione a cidade (opcional)", ["Todos"] + cities_for_country)
 
-# Cuisines disponíveis com base no país/cidade selecionados
-df_country = df[df["country"] == country_selected].copy()
+# Filtrar por país e cidade
+if country_selected == "Todos":
+    df_country = df.copy()
+else:
+    df_country = df[df["country"] == country_selected].copy()
+
 if city_selected != "Todos":
     df_country_city = df_country[df_country["city"] == city_selected]
 else:
     df_country_city = df_country
 
+# Cuisines disponíveis com base no país/cidade selecionados
 cuisines_available = sorted(df_country_city["cuisines"].dropna().unique().tolist())
 cuisine_selected = st.sidebar.multiselect("Selecione culinária(s)", options=cuisines_available, default=None)
 
@@ -43,7 +52,9 @@ if cuisine_selected:
     df_filtered = df_filtered[df_filtered["cuisines"].isin(cuisine_selected)]
 
 # Cabeçalho
-st.title(f"🍽️ Análise de Culinárias — {country_selected}" + (f" / {city_selected}" if city_selected != "Todos" else ""))
+title_country = "Todos os países" if country_selected == "Todos" else country_selected
+title_city = "" if city_selected == "Todos" else f" / {city_selected}"
+st.title(f"🍽️ Análise de Culinárias — {title_country}{title_city}")
 st.markdown("Explore a performance de tipos de culinária no contexto selecionado.")
 
 # KPIs rápidos
@@ -51,7 +62,6 @@ col1, col2, col3 = st.columns(3)
 with col1:
     st.metric("🍽️ Tipos de culinária disponíveis", f"{len(cuisines_available)}")
 with col2:
-    # média rating do universo atual
     if df_filtered["rating"].notna().sum() > 0:
         st.metric("⭐ Avaliação média (filtrada)", f"{df_filtered['rating'].mean():.2f}")
     else:
