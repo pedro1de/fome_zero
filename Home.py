@@ -58,11 +58,12 @@ with col2:
 
 with col3:
     # média de rating com fallback
-    if "rating" in df_filtered.columns and df_filtered["rating"].notna().sum() > 0:
-        avg_rating = df_filtered["rating"].mean()
-        st.metric("⭐ Avaliação Média", f"{avg_rating:.2f}")
-    else:
-        st.metric("⭐ Avaliação Média", "—")
+    if df_filtered["rating"].notna().sum() > 0:
+    avg_rating = df_filtered["rating"].mean()
+    st.metric("⭐ Avaliação Média", f"{avg_rating:.2f}")
+else:
+    st.metric("⭐ Avaliação Média", "—")
+
 
 st.markdown("---")
 
