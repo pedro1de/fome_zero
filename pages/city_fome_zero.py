@@ -68,29 +68,34 @@ with col3:
 
 st.markdown("---")
 
-# Top cidades por número de restaurantes (considerando país ou todos)
+# --- Top cidades por número de restaurantes (robusto) ---
 st.subheader("Top cidades por número de restaurantes")
-top_cities = top_n(df_country, "city", "name" if "name" in df_country.columns else df_country.columns[0], n=15, agg="count")
-if not top_cities.empty:
-    fig1 = px.bar(top_cities, x="city", y="value", labels={"value": "# Restaurantes", "city": "Cidade"}, title=f"Top cidades em {title_country}")
+if "city" in df_country.columns and df_country["city"].notna().sum() > 0:
+    vc = df_country["city"].value_counts().head(20).reset_index()
+    vc.columns = ["city", "count"]
+    fig1 = px.bar(vc, x="count", y="city", orientation="h",
+                  labels={"count":"# Restaurantes", "city":"Cidade"},
+                  title=f"Top cidades em {title_country}")
     st.plotly_chart(fig1, use_container_width=True)
 else:
     st.info("Sem dados de cidade para este contexto.")
 
 st.markdown("---")
 
-# Distribuição de rating por cidade
+# --- Distribuição de rating por cidade (robusto) ---
 st.subheader("Distribuição de avaliações por cidade")
 if df_filtered["rating"].notna().sum() > 0 and "city" in df_filtered.columns:
-    # escolher cidades a plotar: se selecionadas, usar elas; senão top 8 por volume
+    # escolher cidades a plotar: selecionadas > top por volume
     if city_selected:
         cities_plot = city_selected
     else:
-        cities_plot = top_cities["city"].tolist()[:8] if not top_cities.empty else df_country["city"].dropna().unique().tolist()[:8]
+        cities_plot = vc["city"].tolist()[:8] if not vc.empty else df_country["city"].dropna().unique().tolist()[:8]
 
     subset = df_filtered[df_filtered["city"].isin(cities_plot)]
     if not subset.empty:
-        fig2 = px.box(subset, x="city", y="rating", points="outliers", labels={"rating":"Avaliação","city":"Cidade"}, title="Boxplot de avaliações por cidade")
+        fig2 = px.box(subset, x="city", y="rating", points="outliers",
+                      labels={"rating":"Avaliação","city":"Cidade"},
+                      title="Boxplot de avaliações por cidade")
         st.plotly_chart(fig2, use_container_width=True)
     else:
         st.info("Sem dados suficientes para plotar avaliações por cidade.")
@@ -99,7 +104,7 @@ else:
 
 st.markdown("---")
 
-# Mapa focado nas cidades filtradas (apenas se existir coordenadas)
+# --- Mapa das cidades filtradas ---
 st.subheader("📍 Mapa das cidades selecionadas (amostragem)")
 if "latitude" in df_filtered.columns and "longitude" in df_filtered.columns and df_filtered[["latitude","longitude"]].notna().sum().sum() > 0:
     map_df = df_filtered.dropna(subset=["latitude","longitude"])
