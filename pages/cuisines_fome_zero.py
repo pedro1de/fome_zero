@@ -29,7 +29,8 @@ if country_selected == "Todos":
 else:
     cities_for_country = df[df["country"] == country_selected]["city"].dropna().unique().tolist()
 cities_for_country = sorted(cities_for_country)
-city_selected = st.sidebar.selectbox("Selecione a cidade (opcional)", ["Todos"] + cities_for_country)
+city_options = ["Todos"] + cities_for_country
+city_selected = st.sidebar.selectbox("Selecione a cidade (opcional)", city_options)
 
 # Filtrar por país e cidade
 if country_selected == "Todos":
@@ -74,35 +75,55 @@ with col3:
 
 st.markdown("---")
 
-# Top culinárias por número de restaurantes (no contexto)
+# --- Top culinárias por número de restaurantes (sempre útil) ---
 st.subheader("Top Culinárias (por número de restaurantes)")
 if cuisines_available:
-    top_cuis = top_n(df_country_city, "cuisines", "name" if "name" in df_country_city.columns else df_country_city.columns[0], n=20)
-    fig = px.bar(top_cuis, x="cuisines", y="value", labels={"value":"# Restaurantes","cuisines":"Culinária"}, title="Top culinárias no contexto")
+    vc = df_country_city["cuisines"].value_counts().reset_index().rename(columns={"index":"cuisines","cuisines":"count"})
+    vc_top = vc.head(20)
+    fig = px.bar(vc_top, x="count", y="cuisines", orientation="h", labels={"count":"# Restaurantes","cuisines":"Culinária"}, title="Top culinárias no contexto")
     st.plotly_chart(fig, use_container_width=True)
 else:
     st.info("Nenhuma culinária disponível no contexto selecionado.")
 
 st.markdown("---")
 
-# Relação preço x avaliação por culinária (scatter aggregated)
-st.subheader("Preço mediano vs Avaliação média por culinária")
-if "price_num" in df_country_city.columns and df_country_city["price_num"].notna().sum() > 0 and "rating" in df_country_city.columns and df_country_city["rating"].notna().sum() > 0:
-    agg = (
-        df_country_city
-        .groupby("cuisines")
-        .agg(price_med=("price_num", "median"), rating_mean=("rating", "mean"), count=("name", "count"))
-        .reset_index()
-    )
-    agg = agg[agg["count"] >= 3]  # filtrar poucas amostras
-    if not agg.empty:
-        fig2 = px.scatter(agg, x="price_med", y="rating_mean", size="count", hover_name="cuisines",
-                          labels={"price_med":"Preço mediano","rating_mean":"Avaliação média"}, title="Preço vs Avaliação por culinária")
-        st.plotly_chart(fig2, use_container_width=True)
+# --- Boxplot de rating por culinária (mostra variação) ---
+st.subheader("Distribuição de avaliações por culinária (Top N)")
+# slider para controlar top N
+top_n_cuis = st.slider("Mostrar top N culinárias por volume", min_value=5, max_value=30, value=12)
+top_cuis_list = vc.head(top_n_cuis)["cuisines"].tolist() if 'vc' in locals() and not vc.empty else []
+
+if top_cuis_list:
+    subset = df_country_city[df_country_city["cuisines"].isin(top_cuis_list) & df_country_city["rating"].notna()]
+    if not subset.empty:
+        fig_box = px.box(subset, x="cuisines", y="rating", points="outliers", labels={"rating":"Avaliação","cuisines":"Culinária"}, title="Boxplot de avaliação por culinária (Top selecionado)")
+        st.plotly_chart(fig_box, use_container_width=True)
     else:
-        st.info("Amostra insuficiente para criar scatter de preço vs avaliação.")
+        st.info("Sem avaliações suficientes para gerar o boxplot.")
 else:
-    st.info("Dados de preço ou avaliação insuficientes para este gráfico.")
+    st.info("Sem culinárias suficientes para mostrar o boxplot.")
+
+st.markdown("---")
+
+# --- Agregado: número vs avaliação média (muito robusto) ---
+st.subheader("Popularidade vs Avaliação média por culinária")
+agg = (
+    df_country_city
+    .groupby("cuisines")
+    .agg(count=("name","count"), rating_mean=("rating","mean"))
+    .reset_index()
+    .dropna(subset=["rating_mean"])
+)
+# slider minimo de restaurantes para considerar
+min_count = st.slider("Mínimo de restaurantes por culinária", min_value=1, max_value=20, value=3)
+agg_filtered = agg[agg["count"] >= min_count]
+if not agg_filtered.empty:
+    fig_sc = px.scatter(agg_filtered, x="count", y="rating_mean", size="count", hover_name="cuisines",
+                        labels={"count":"# Restaurantes","rating_mean":"Avaliação média"},
+                        title="# Restaurantes vs Avaliação média (por culinária)")
+    st.plotly_chart(fig_sc, use_container_width=True)
+else:
+    st.info("Ajuste o filtro de mínimo de restaurantes para ver o gráfico.")
 
 st.markdown("---")
 
