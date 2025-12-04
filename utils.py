@@ -5,6 +5,14 @@ import streamlit as st
 def load_data(path="dataset/zomato.csv"):
     df = pd.read_csv(path)
     df.columns = [c.strip().lower() for c in df.columns]
+COUNTRY_MAP = {
+    1: "India", 14: "Australia", 30: "Brazil", 37: "Canada",
+    94: "Indonesia", 148: "New Zealand", 162: "Philippines",
+    166: "Qatar", 184: "Singapore", 189: "South Africa",
+    191: "Sri Lanka", 208: "Turkey", 214: "United Arab Emirates",
+    215: "United Kingdom", 216: "United States"
+}
+
 
     # Ajuste de tipos
     if "latitude" in df.columns:
@@ -17,6 +25,10 @@ def load_data(path="dataset/zomato.csv"):
 
     if "rating" in df.columns:
         df["rating"] = pd.to_numeric(df["rating"], errors="coerce")
+        
+    if "country code" in df.columns:
+    df["country"] = df["country code"].map(COUNTRY_MAP)
+
 
     return df
 
